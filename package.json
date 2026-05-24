@@ -1,0 +1,20 @@
+{
+  "name": "wrom-chatgpt-backend",
+  "version": "1.0.0",
+  "description": "Auto-login ChatGPT without API key by Snake AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "login": "node server.js --login",
+    "login:chrome": "node server.js --login --debug-chrome",
+    "chat": "node chat.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "nodemailer": "^8.0.8",
+    "puppeteer": "^24.15.0"
+  },
+  "devDependencies": {
+    "ssh2": "^1.17.0"
+  }
+}

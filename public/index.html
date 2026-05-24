@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake AI</title>
+  <link rel="icon" type="image/png" href="/depoizon-logo.png">
+  <link rel="icon" type="image/svg+xml" href="/depoizon-logo.svg">
+  <link rel="apple-touch-icon" href="/depoizon-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=ui-localhost-match-12">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="auth-boot">
+  <main class="auth-screen hidden" id="authView" aria-label="Autentikasi">
+    <section class="auth-card">
+      <button class="icon-button compact auth-close" type="button" id="authClose" aria-label="Tutup login"><i data-lucide="x"></i></button>
+      <span class="brand-mark auth-logo" aria-hidden="true"></span>
+      <h1 id="authTitle">Welcome back</h1>
+      <p class="auth-error hidden" id="authError"></p>
+      <form class="auth-form" id="authForm">
+        <label class="auth-field auth-name-field hidden" for="authName">Nama
+          <input id="authName" autocomplete="name" placeholder="Nama lengkap">
+        </label>
+        <label class="auth-field" for="authEmail">Email
+          <input id="authEmail" type="email" autocomplete="email" placeholder="Email address" required>
+        </label>
+        <label class="auth-field" for="authPassword">Password
+          <input id="authPassword" type="password" autocomplete="current-password" placeholder="Password" required>
+        </label>
+        <button class="auth-primary" type="submit" id="authSubmit">Continue</button>
+      </form>
+      <div class="auth-separator"><span>OR</span></div>
+      <div class="google-button-wrap" id="googleButtonWrap">
+        <button class="auth-provider" type="button" id="googleAuth"><span class="google-g">G</span><span id="googleAuthText">Continue with Google</span></button>
+      </div>
+      <p class="auth-switch">
+        <span id="authSwitchText">Don't have an account?</span>
+        <button type="button" id="toggleAuthMode">Sign up</button>
+      </p>
+      <p class="auth-legal">Terms of use | Privacy policy</p>
+    </section>
+  </main>
+
+  <main class="verify-screen hidden" id="verifyView" aria-label="Verifikasi email">
+    <section class="verify-panel">
+      <div class="verify-icon"><i data-lucide="mail-check"></i></div>
+      <h1>Check your email</h1>
+      <p>Kami mengirim kode OTP ke email Anda. Masukkan kode 6 digit untuk mengaktifkan akun.</p>
+      <strong id="verifyEmail">user@example.com</strong>
+      <label class="verify-code-field" for="verifyCode">Kode OTP
+        <input id="verifyCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+      </label>
+      <button class="auth-primary" type="button" id="verifyNow">Verify account</button>
+      <p class="auth-switch">Didn't receive the email? <button type="button" id="resendVerify">Resend</button></p>
+    </section>
+  </main>
+
+  <main class="admin-login-screen hidden" id="adminLoginView" aria-label="Login admin">
+    <section class="admin-login-card">
+      <div class="admin-brand"><span class="brand-mark" aria-hidden="true"></span><strong>Snake AI</strong></div>
+      <h1>Admin Portal</h1>
+      <p class="auth-error hidden" id="adminError"></p>
+      <form class="auth-form" id="adminLoginForm">
+        <label class="auth-field" for="adminEmail">Admin Email
+          <input id="adminEmail" type="email" autocomplete="username" placeholder="admin@snake.ai" required>
+        </label>
+        <label class="auth-field" for="adminPassword">Password
+          <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Password" required>
+        </label>
+        <button class="auth-primary" type="submit">Sign In to Dashboard</button>
+      </form>
+      <small>Security Notice: Authorized access only</small>
+      <a class="admin-link" href="/">Back to app login</a>
+    </section>
+  </main>
+
+  <main class="admin-dashboard hidden" id="adminDashboardView" aria-label="Dashboard admin">
+    <aside class="admin-sidebar">
+      <div class="admin-side-brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <strong>Snake AI Admin</strong>
+        <button class="icon-button admin-sidebar-toggle" id="adminSidebarToggle" type="button" title="Tutup navbar" aria-label="Tutup navbar admin"><i data-lucide="panel-left-close"></i></button>
+      </div>
+      <button class="admin-nav active" type="button" data-admin-view="overview"><i data-lucide="layout-dashboard"></i><span>Overview</span></button>
+      <button class="admin-nav" type="button" data-admin-view="users"><i data-lucide="users"></i><span>User Management</span></button>
+      <button class="admin-nav" type="button" data-admin-view="payments"><i data-lucide="receipt-text"></i><span>Payment Requests</span></button>
+      <button class="admin-nav" type="button" data-admin-view="analytics"><i data-lucide="bar-chart-3"></i><span>Analytics</span></button>
+      <button class="admin-nav" type="button" data-admin-view="models"><i data-lucide="settings"></i><span>Model Settings</span></button>
+      <button class="admin-nav" type="button" data-admin-view="broadcast"><i data-lucide="megaphone"></i><span>Broadcast Board</span></button>
+    </aside>
+    <button class="admin-sidebar-backdrop" id="adminSidebarBackdrop" type="button" aria-label="Tutup navbar admin"></button>
+    <section class="admin-main">
+      <header class="admin-topbar">
+        <button class="icon-button admin-mobile-nav-toggle" id="adminMobileNavToggle" type="button" title="Buka navbar" aria-label="Buka navbar admin"><i data-lucide="menu"></i></button>
+        <h1>Overview</h1>
+        <div class="admin-top-actions">
+          <label class="admin-search"><i data-lucide="search"></i><input placeholder="Search"></label>
+          <button class="icon-button" id="adminLogout" title="Logout" aria-label="Logout"><i data-lucide="log-out"></i></button>
+        </div>
+      </header>
+      <section class="admin-view-panel" id="adminOverviewPanel">
+        <section class="admin-metrics" id="adminMetrics"></section>
+        <section class="admin-chart-card">
+          <div class="admin-card-head"><h2>User Activity</h2><button type="button">Last 30 days <i data-lucide="chevron-down"></i></button></div>
+          <div class="admin-chart" aria-hidden="true">
+            <svg viewBox="0 0 900 220" preserveAspectRatio="none">
+              <path d="M0 150 L80 120 L150 145 L230 105 L310 132 L385 80 L460 122 L540 88 L620 118 L710 70 L790 130 L900 95" />
+              <path class="line-dark" d="M0 118 L90 130 L170 155 L260 112 L350 142 L430 95 L520 105 L610 150 L700 108 L780 52 L860 112 L900 96" />
+            </svg>
+          </div>
+        </section>
+        <section class="admin-table-card">
+          <div class="admin-card-head"><h2>Recent New Signups</h2><button type="button" id="viewAllUsers">View All</button></div>
+          <table>
+            <thead><tr><th>User</th><th>Email</th><th>Date</th><th>Status</th><th>Provider</th></tr></thead>
+            <tbody id="adminUsers"></tbody>
+          </table>
+        </section>
+      </section>
+      <section class="admin-view-panel hidden" id="adminUsersPanel">
+        <section class="admin-table-card admin-users-card">
+          <div class="admin-card-head">
+            <h2>User Management</h2>
+            <span class="admin-hint">Kelola nama, email, paket, status freeze, dan hapus user.</span>
+          </div>
+          <table>
+            <thead><tr><th>Username</th><th>Email</th><th>Titel</th><th>Provider</th><th>Status</th><th>Last login</th><th>Action</th></tr></thead>
+            <tbody id="adminUserRows"></tbody>
+          </table>
+        </section>
+      </section>
+      <section class="admin-view-panel hidden" id="adminPaymentsPanel">
+        <section class="admin-table-card admin-payments-card">
+          <div class="admin-card-head">
+            <h2>Payment Requests</h2>
+            <span class="admin-hint">Review bukti pembayaran QRIS sebelum mengaktifkan paket user.</span>
+          </div>
+          <div class="payment-request-list" id="adminPaymentRequests"></div>
+        </section>
+      </section>
+      <section class="admin-view-panel hidden" id="adminAnalyticsPanel">
+        <section class="admin-table-card admin-analytics-card">
+          <div class="admin-card-head">
+            <div>
+              <h2>Analisis Aktivitas AI</h2>
+              <span class="admin-hint">Lihat model yang paling sering dipakai user lewat kurva Free, Pro, dan Ultra.</span>
+            </div>
+            <span class="admin-range-pill">14 hari terakhir</span>
+          </div>
+          <div class="admin-analytics-summary" id="adminAnalyticsSummary"></div>
+          <div class="admin-model-chart" id="adminModelChart"></div>
+        </section>
+      </section>
+      <section class="admin-view-panel hidden" id="adminModelsPanel">
+        <section class="admin-table-card admin-model-card">
+          <div class="admin-card-head">
+            <h2>Model Settings</h2>
+            <span class="admin-hint">Aktifkan/nonaktifkan model dan ubah keterangan yang tampil di website.</span>
+          </div>
+          <div class="admin-model-list" id="adminModelSettings"></div>
+        </section>
+      </section>
+      <section class="admin-view-panel hidden" id="adminBroadcastPanel">
+        <section class="admin-table-card admin-broadcast-card">
+          <div class="admin-card-head">
+            <div>
+              <h2>Broadcast Board</h2>
+              <span class="admin-hint">Kirim notifikasi email profesional ke semua user AI yang terdaftar.</span>
+            </div>
+            <span class="admin-range-pill" id="adminBroadcastRecipientCount">0 penerima</span>
+          </div>
+          <div class="broadcast-grid">
+            <form class="broadcast-form" id="adminBroadcastForm">
+              <label>Judul email <input id="adminBroadcastSubject" maxlength="140" placeholder="Contoh: Update fitur Snake AI"></label>
+              <label>Pesan notifikasi <textarea id="adminBroadcastMessage" maxlength="4000" rows="8" placeholder="Tulis pesan yang ingin dikirim ke semua pengguna..."></textarea></label>
+              <p class="broadcast-status" id="adminBroadcastStatus"></p>
+              <button class="primary-button" type="submit"><i data-lucide="send"></i><span>Kirim Notifikasi</span></button>
+            </form>
+            <aside class="broadcast-preview" aria-label="Preview email">
+              <span class="broadcast-preview-kicker">Snake AI Notification</span>
+              <h3 id="adminBroadcastPreviewSubject">Judul email akan tampil di sini</h3>
+              <div class="broadcast-preview-body" id="adminBroadcastPreviewMessage">Isi pesan admin akan tampil sebagai preview email yang rapi dan profesional.</div>
+              <small>Dikirim satu per satu agar alamat email pengguna tetap privat.</small>
+            </aside>
+          </div>
+        </section>
+        <section class="admin-table-card admin-broadcast-history-card">
+          <div class="admin-card-head">
+            <h2>Riwayat Broadcast</h2>
+            <span class="admin-hint">Status pengiriman email terbaru.</span>
+          </div>
+          <div class="broadcast-history" id="adminBroadcastHistory"></div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <div class="app-shell sidebar-collapsed">
+    <aside class="rail" aria-label="Navigasi cepat">
+      <button class="icon-button brand-button" id="toggleSidebar" title="Sidebar" aria-label="Sidebar">
+        <span class="brand-mark small" aria-hidden="true"></span>
+      </button>
+      <div class="rail-actions">
+        <button class="icon-button" title="Pencarian" id="searchButton" aria-label="Pencarian"><i data-lucide="search"></i></button>
+        <button class="icon-button active" title="Percakapan Baru" id="newChatRail" aria-label="Percakapan Baru"><i data-lucide="square-pen"></i></button>
+        <button class="icon-button" title="Proyek" id="projectRail" aria-label="Proyek"><i data-lucide="folder"></i></button>
+        <button class="icon-button" title="Riwayat" id="historyRail" aria-label="Riwayat"><i data-lucide="history"></i></button>
+      </div>
+      <button class="avatar-button rail-avatar" id="profileRail" aria-label="Profil" aria-haspopup="true" aria-expanded="false">Sy</button>
+    </aside>
+
+    <aside class="sidebar collapsed" id="sidebar" aria-label="Sidebar utama">
+      <div class="sidebar-top">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <button class="icon-button subtle" id="collapseSidebar" title="Tutup sidebar" aria-label="Tutup sidebar"><i data-lucide="panel-left-close"></i></button>
+      </div>
+
+      <nav class="nav-list">
+        <button class="nav-item" id="searchNav"><i data-lucide="search"></i><span>Pencarian</span></button>
+        <button class="nav-item active" id="newChat"><i data-lucide="square-pen"></i><span>Percakapan Baru</span></button>
+      </nav>
+
+      <section class="search-panel hidden" id="searchPanel">
+        <label class="search-box" for="searchInput">
+          <i data-lucide="search"></i>
+          <input id="searchInput" type="search" placeholder="Cari judul atau pesan" autocomplete="off">
+        </label>
+        <div class="search-results" id="searchResults"></div>
+      </section>
+
+      <section class="sidebar-section project-section" id="projectSection">
+        <button class="section-title" type="button" id="toggleProjects">Proyek <i data-lucide="chevron-down"></i></button>
+        <button class="muted-action" type="button"><i data-lucide="plus"></i><span>Proyek Baru</span></button>
+      </section>
+
+      <section class="sidebar-section history-section">
+        <div class="history-head">
+          <button class="section-title" type="button" id="toggleHistory">Riwayat <i data-lucide="chevron-down"></i></button>
+          <button class="text-button danger" id="clearHistory" type="button">Hapus</button>
+        </div>
+        <div class="history-groups" id="historyList"></div>
+      </section>
+
+      <button class="profile-card" id="profileButton" type="button" aria-haspopup="true" aria-expanded="false">
+        <span class="avatar-button" id="profileInitials">Sy</span>
+        <span class="profile-copy">
+          <strong><span id="profileName">Sar yadi</span><span class="profile-plan-badge hidden" id="profilePlanBadge"><i data-lucide="badge-check"></i><span>Pro</span></span></strong>
+          <small id="profileEmail">boldape156@mail.desapacul.si</small>
+        </span>
+        <span class="profile-logout" id="profileLogout" title="Logout" aria-label="Logout"><i data-lucide="log-out"></i></span>
+      </button>
+      <section class="guest-card hidden" id="guestCard">
+        <h3>Dapatkan respons yang disesuaikan</h3>
+        <p>Masuk untuk menyimpan obrolan, mengunggah file, dan melanjutkan percakapan kapan saja.</p>
+        <button class="guest-login-button" type="button" id="sidebarLogin">Masuk</button>
+      </section>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <button class="icon-button mobile-only" id="mobileSidebar" aria-label="Buka sidebar"><i data-lucide="menu"></i></button>
+        <div class="topbar-spacer"></div>
+        <div class="topbar-auth-actions hidden" id="topbarAuthActions">
+          <button class="topbar-login" type="button" id="topbarLogin">Masuk</button>
+          <button class="topbar-register" type="button" id="topbarRegister">Daftar gratis</button>
+        </div>
+        <button class="icon-button topbar-edit" id="renameChat" title="Percakapan Baru" aria-label="Percakapan Baru"><i data-lucide="square-pen"></i></button>
+      </header>
+
+      <section class="welcome-view" id="welcomeView">
+        <div class="welcome-brand" aria-label="Snake AI">
+          <span class="brand-mark hero-mark" aria-hidden="true"></span>
+          <span class="brand-wordmark" aria-hidden="true">
+            <span>Snake</span>
+            <span>AI</span>
+          </span>
+        </div>
+      </section>
+
+      <section class="chat-view hidden" id="chatView" aria-live="polite">
+        <div class="message-list" id="messageList"></div>
+      </section>
+
+      <section class="composer-wrap" aria-label="Kirim pesan">
+        <div class="reply-banner hidden" id="replyBanner">
+          <span id="replyText"></span>
+          <button class="icon-button compact" id="cancelReply" type="button" aria-label="Batalkan reply"><i data-lucide="x"></i></button>
+        </div>
+        <form class="composer" id="composerForm">
+          <div class="attachment-row" id="attachmentRow"></div>
+          <div class="composer-input-row">
+            <button type="button" class="composer-plus" id="attachButton" title="Tambah lampiran" aria-label="Tambah lampiran"><i data-lucide="plus"></i></button>
+            <textarea id="messageInput" rows="1" placeholder="Tanyakan Apa Saja"></textarea>
+            <div class="composer-tools">
+              <button type="button" class="mode-button" id="modeButton" aria-haspopup="true" aria-expanded="false"><span id="activeMode">Free</span><i data-lucide="chevron-down"></i></button>
+              <button type="submit" class="send-button" title="Kirim" aria-label="Kirim"><i data-lucide="arrow-up"></i></button>
+            </div>
+          </div>
+        </form>
+        <div class="attach-menu hidden" id="attachMenu">
+          <button id="uploadFile" type="button"><i data-lucide="upload"></i><span>Unggah file</span></button>
+        </div>
+        <div class="mode-menu hidden" id="modeMenu">
+          <button type="button" data-mode="Free" data-model="gpt-5.5">Free <small>GPT 5.5</small></button>
+          <button type="button" data-mode="Pro" data-model="nvidia-nemotron-3-super-120b">Pro <small>Snake AI 1.0</small></button>
+          <button type="button" data-mode="Ultra" data-model="deepseek-v4-pro">Ultra <small>Snake AI 1.5</small></button>
+        </div>
+        <input id="fileInput" type="file" multiple hidden accept="image/*,.txt,.md,.json,.csv,.js,.ts,.html,.css,.pdf,.doc,.docx">
+      </section>
+    </main>
+  </div>
+
+  <div class="account-menu hidden" id="accountMenu" role="menu" aria-label="Menu akun">
+    <button class="account-menu-item" id="accountProfile" type="button" role="menuitem">
+      <span class="account-menu-icon"><i data-lucide="user-round"></i></span>
+      <span><strong>Profil</strong><small>Edit nama dan foto</small></span>
+    </button>
+    <button class="account-menu-item" id="accountSubscription" type="button" role="menuitem">
+      <span class="account-menu-icon pro-icon"><i data-lucide="gem"></i></span>
+      <span><strong>Langganan</strong><small>Pilih Pro atau Ultra</small></span>
+    </button>
+    <button class="account-menu-item" id="accountPersonalization" type="button" role="menuitem">
+      <span class="account-menu-icon dark-icon"><i data-lucide="palette"></i></span>
+      <span><strong>Personalisasi</strong><small>Tema terang atau gelap</small></span>
+    </button>
+  </div>
+
+  <dialog class="modal" id="profileModal">
+    <form method="dialog" class="modal-panel profile-panel" id="profileForm">
+      <div class="modal-heading-row profile-heading-row">
+        <h2>Edit profil</h2>
+        <button class="icon-button compact" id="closeProfileTop" type="button" aria-label="Tutup profil"><i data-lucide="x"></i></button>
+      </div>
+      <div class="profile-editor">
+        <button class="profile-avatar-preview" id="profileAvatarPick" type="button" aria-label="Ganti foto profil">
+          <span class="avatar-button profile-avatar-large" id="profileAvatarPreview">Sy</span>
+        </button>
+        <div class="profile-editor-copy">
+          <strong>Foto profil</strong>
+          <span>Gunakan gambar sendiri atau logo bawaan Snake AI.</span>
+          <div class="profile-editor-actions">
+            <button class="secondary-button compact-button" id="profileAvatarPickText" type="button">Pilih foto</button>
+            <button class="secondary-button compact-button" id="profileAvatarReset" type="button">Default</button>
+          </div>
+        </div>
+      </div>
+      <section class="credit-panel" aria-label="Credit model">
+        <div class="credit-panel-head">
+          <strong>Credit model</strong>
+          <small>Persentase menentukan apakah model bisa dipakai.</small>
+        </div>
+        <div class="credit-list" id="creditList"></div>
+      </section>
+      <label>Nama <input id="profileNameInput" autocomplete="name"></label>
+      <label>Email <input id="profileEmailInput" autocomplete="email"></label>
+      <label>Inisial <input id="profileInitialsInput" maxlength="4"></label>
+      <input id="profileAvatarInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+      <div class="modal-actions">
+        <button type="button" class="secondary-button" id="closeProfile">Batal</button>
+        <button class="primary-button" value="save">Simpan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="subscriptionModal">
+    <div class="modal-panel subscription-panel">
+      <div class="modal-heading-row">
+        <div>
+          <h2>Langganan Snake AI</h2>
+          <p>Pilih paket yang cocok untuk kebutuhan chat dan pembuatan tool. Masa aktif 30 hari.</p>
+        </div>
+        <button class="icon-button compact" id="closeSubscription" type="button" aria-label="Tutup langganan"><i data-lucide="x"></i></button>
+      </div>
+      <div class="pricing-list">
+        <article class="pricing-card pro-card">
+          <div class="pricing-head">
+            <span class="plan-badge"><i data-lucide="badge-check"></i>Pro</span>
+            <strong>10k<span>/30 hari</span></strong>
+          </div>
+          <ul>
+            <li><i data-lucide="infinity"></i>AI tanpa batas</li>
+            <li><i data-lucide="shield-check"></i>Keamanan Wrom GPT</li>
+            <li><i data-lucide="code-2"></i>Pembuatan skrip, tool, dan kebutuhan coding</li>
+          </ul>
+          <button class="primary-button plan-button" type="button" data-subscribe-plan="Pro">Pilih Pro</button>
+        </article>
+        <article class="pricing-card ultra-card">
+          <div class="pricing-head">
+            <span class="plan-badge ultra-badge"><i data-lucide="crown"></i>Ultra</span>
+            <strong>20k<span>/30 hari</span></strong>
+          </div>
+          <ul>
+            <li><i data-lucide="sparkles"></i>Wrom GPT lengkap</li>
+            <li><i data-lucide="unlock"></i>Bebas akses tanpa batasan</li>
+            <li><i data-lucide="brain-circuit"></i>Kecerdasan lebih akurat</li>
+            <li><i data-lucide="layers-3"></i>Cocok untuk tugas kompleks</li>
+          </ul>
+          <button class="primary-button plan-button ultra-button" type="button" data-subscribe-plan="Ultra">Pilih Ultra</button>
+        </article>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="paymentModal">
+    <form method="dialog" class="modal-panel payment-panel" id="paymentForm">
+      <div class="modal-heading-row">
+        <div>
+          <h2 id="paymentTitle">Pembayaran QRIS</h2>
+          <p id="paymentSubtitle">Scan QRIS lalu upload bukti pembayaran.</p>
+        </div>
+        <button class="icon-button compact" id="closePayment" type="button" aria-label="Tutup pembayaran"><i data-lucide="x"></i></button>
+      </div>
+      <div class="payment-qris-box">
+        <img id="paymentQrImage" alt="QRIS pembayaran">
+        <div class="payment-qris-copy">
+          <span>Total pembayaran</span>
+          <strong id="paymentAmount">Rp0</strong>
+          <small id="paymentPlan">Paket Pro</small>
+        </div>
+      </div>
+      <label class="payment-proof-picker" id="paymentProofPicker">
+        <span class="payment-proof-icon"><i data-lucide="upload-cloud"></i></span>
+        <span class="payment-proof-copy">
+          <strong>Upload bukti pembayaran</strong>
+          <small id="paymentProofName">PNG, JPG, atau WebP maksimal 3.5 MB</small>
+        </span>
+        <span class="payment-proof-button">Pilih file</span>
+        <input id="paymentProofInput" type="file" accept="image/png,image/jpeg,image/webp" required>
+      </label>
+      <img class="payment-proof-preview hidden" id="paymentProofPreview" alt="Preview bukti pembayaran">
+      <p class="auth-error hidden" id="paymentError"></p>
+      <div class="modal-actions">
+        <button type="button" class="secondary-button" id="cancelPayment">Batal</button>
+        <button type="submit" class="primary-button">Kirim ke Admin</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="personalizationModal">
+    <div class="modal-panel personalization-panel">
+      <div class="modal-heading-row">
+        <div>
+          <h2>Personalisasi</h2>
+          <p>Atur tampilan aplikasi sesuai kenyamanan mata.</p>
+        </div>
+        <button class="icon-button compact" id="closePersonalization" type="button" aria-label="Tutup personalisasi"><i data-lucide="x"></i></button>
+      </div>
+      <section class="theme-choice">
+        <span class="theme-choice-icon"><i data-lucide="moon-star"></i></span>
+        <span class="theme-choice-copy">
+          <strong>Mode gelap</strong>
+          <small>Ubah tema menjadi dark agar lebih nyaman dipakai malam hari.</small>
+        </span>
+        <button class="theme-toggle" id="themeToggle" type="button" role="switch" aria-checked="false">
+          <span></span>
+        </button>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="actionModal">
+    <div class="modal-panel action-panel">
+      <h2 id="actionTitle">Konfirmasi</h2>
+      <p id="actionMessage">Lanjutkan tindakan ini?</p>
+      <input id="actionInput" class="hidden" autocomplete="off">
+      <div class="modal-actions" id="actionButtons"></div>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="adminUserModal">
+    <form method="dialog" class="modal-panel admin-user-editor" id="adminUserForm">
+      <h2>Edit user</h2>
+      <p class="auth-error hidden" id="adminUserError"></p>
+      <label>Username <input id="adminEditName" autocomplete="off"></label>
+      <label>Email <input id="adminEditEmail" type="email" autocomplete="off"></label>
+      <label>Titel user
+        <select id="adminEditPlan">
+          <option value="Free">Free</option>
+          <option value="Pro">Pro</option>
+          <option value="Ultra">Ultra</option>
+        </select>
+      </label>
+      <label>Password baru <input id="adminEditPassword" type="password" autocomplete="new-password" placeholder="Kosongkan jika tidak diganti"></label>
+      <label class="checkbox-row"><input id="adminEditVerified" type="checkbox"> Email verified</label>
+      <label class="checkbox-row"><input id="adminEditFrozen" type="checkbox"> Bekukan akun user</label>
+      <div class="modal-actions">
+        <button type="button" class="secondary-button" id="adminCancelEdit">Batal</button>
+        <button class="primary-button" value="save">Simpan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="image-preview-modal" id="imagePreviewModal" aria-label="Preview gambar">
+    <button class="image-preview-close" id="imagePreviewClose" type="button" aria-label="Tutup preview"><i data-lucide="x"></i></button>
+    <img id="imagePreviewFull" alt="">
+  </dialog>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="/app.js?v=ui-localhost-match-12"></script>
+</body>
+</html>
