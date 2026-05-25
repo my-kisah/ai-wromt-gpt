@@ -2687,6 +2687,13 @@ i[data-lucide] {
   margin: 5px 0;
   padding-left: 2px;
 }
+.response-text li > ul,
+.response-text li > ol {
+  margin: 6px 0 8px;
+}
+.response-text .list-continuation {
+  margin: 3px 0 8px;
+}
 .response-text strong {
   font-weight: 800;
 }

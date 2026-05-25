@@ -2212,6 +2212,7 @@ function renderMarkdownText(container, content = '') {
   const lines = String(content || '').replace(/\r/g, '').split('\n');
   let paragraphLines = [];
   let list = null;
+  let currentNumberedItem = null;
 
   const closeParagraph = () => {
     appendMarkdownParagraph(container, paragraphLines);
@@ -2221,6 +2222,7 @@ function renderMarkdownText(container, content = '') {
     if (list) {
       container.appendChild(list);
       list = null;
+      currentNumberedItem = null;
     }
   };
 
@@ -2229,7 +2231,7 @@ function renderMarkdownText(container, content = '') {
 
     if (!line) {
       closeParagraph();
-      closeList();
+      if (!list) closeList();
       return;
     }
 
@@ -2254,6 +2256,17 @@ function renderMarkdownText(container, content = '') {
     const bullet = line.match(/^[-*]\s+(.+)$/);
     if (bullet) {
       closeParagraph();
+      if (list?.tagName === 'OL' && currentNumberedItem) {
+        let nested = currentNumberedItem.querySelector(':scope > ul');
+        if (!nested) {
+          nested = document.createElement('ul');
+          currentNumberedItem.appendChild(nested);
+        }
+        const item = document.createElement('li');
+        item.innerHTML = renderInlineMarkdown(cleanDisplayText(bullet[1]));
+        nested.appendChild(item);
+        return;
+      }
       if (!list || list.tagName !== 'UL') {
         closeList();
         list = document.createElement('ul');
@@ -2261,6 +2274,7 @@ function renderMarkdownText(container, content = '') {
       const item = document.createElement('li');
       item.innerHTML = renderInlineMarkdown(cleanDisplayText(bullet[1]));
       list.appendChild(item);
+      currentNumberedItem = null;
       return;
     }
 
@@ -2274,6 +2288,16 @@ function renderMarkdownText(container, content = '') {
       const item = document.createElement('li');
       item.innerHTML = renderInlineMarkdown(cleanDisplayText(numbered[1]));
       list.appendChild(item);
+      currentNumberedItem = item;
+      return;
+    }
+
+    if (list?.tagName === 'OL' && currentNumberedItem && /^\s{2,}\S/.test(rawLine)) {
+      closeParagraph();
+      const continuation = document.createElement('div');
+      continuation.className = 'list-continuation';
+      continuation.innerHTML = renderInlineMarkdown(cleanDisplayText(line));
+      currentNumberedItem.appendChild(continuation);
       return;
     }
 
