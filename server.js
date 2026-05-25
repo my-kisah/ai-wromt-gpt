@@ -35,6 +35,8 @@ process.on('unhandledRejection', (err) => {
 let browser, page;
 let attachedToExistingChrome = false;
 let isRecovering = false;
+let chatGptLoginRequired = false;
+let chatGptLastStatus = null;
 let chatQueue = Promise.resolve();
 let remoteChatQueue = Promise.resolve();
 const activeChatRequests = new Map();
@@ -2274,17 +2276,28 @@ async function getChatPage() {
 }
 
 async function waitForChatReady(timeout = 600000) {
-    await page.waitForFunction((selector) => {
-        const prompt = document.querySelector(selector);
-        if (!prompt) return false;
+    try {
+        await page.waitForFunction((selector) => {
+            const prompt = document.querySelector(selector);
+            if (!prompt) return false;
 
-        const rect = prompt.getBoundingClientRect();
-        return rect.width > 0 && rect.height > 0;
-    }, { timeout }, PROMPT_SELECTOR);
+            const rect = prompt.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0;
+        }, { timeout }, PROMPT_SELECTOR);
+    } catch (err) {
+        const status = await getLoginStatus();
+        if (status.needsLogin) throw chatGptSessionError(status);
+        throw err;
+    }
+
+    const status = await getLoginStatus();
+    if (!status.loggedIn) throw chatGptSessionError(status);
 }
 
 async function ensureChatReady() {
+    if (chatGptLoginRequired) throw chatGptSessionError(chatGptLastStatus);
     await recoverSession();
+    if (!isBrowserUsable()) throw chatGptSessionError(chatGptLastStatus);
 
     for (let attempt = 1; attempt <= 3; attempt += 1) {
         try {
@@ -3156,26 +3169,41 @@ async function saveSession() {
 
 async function getLoginStatus() {
     if (!isBrowserUsable()) {
-        return { browserReady: false, loggedIn: false, accountHint: null };
+        return { browserReady: false, loggedIn: false, hasPrompt: false, needsLogin: chatGptLoginRequired, accountHint: null, url: null };
     }
 
     try {
         return await page.evaluate(() => {
             const text = document.body.innerText || '';
+            const href = window.location.href;
+            const host = window.location.hostname;
             const emailMatch = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
             const hasPrompt = !!document.querySelector('div#prompt-textarea[contenteditable="true"], [data-testid="composer-input"], div[contenteditable="true"][role="textbox"]');
-            const hasProfileButton = !!document.querySelector('[data-testid="accounts-profile-button"]');
-            const asksLogin = /Masuk|Daftar gratis|Log in|Sign up|Tetap keluar/i.test(text);
+            const needsLogin = host.includes('auth.openai.com')
+                || /\/auth\/login|log-in|login|sign-in|sign-up/i.test(href)
+                || /Masuk|Daftar gratis|Log in|Sign up|Log in or create an account|Tetap keluar/i.test(text);
 
             return {
                 browserReady: true,
-                loggedIn: hasPrompt && hasProfileButton && !asksLogin,
-                accountHint: emailMatch ? emailMatch[0] : null
+                loggedIn: hasPrompt && !needsLogin,
+                hasPrompt,
+                needsLogin,
+                accountHint: emailMatch ? emailMatch[0] : null,
+                url: href
             };
         });
     } catch (err) {
-        return { browserReady: false, loggedIn: false, accountHint: null };
+        return { browserReady: false, loggedIn: false, hasPrompt: false, needsLogin: chatGptLoginRequired, accountHint: null, url: null };
     }
+}
+
+function chatGptSessionError(status = {}) {
+    const err = new Error('Session ChatGPT Free belum login atau sudah expired. Jalankan login ulang ChatGPT di VPS, lalu restart snake-ai.');
+    err.status = 503;
+    err.needsChatGptLogin = true;
+    chatGptLoginRequired = true;
+    chatGptLastStatus = status || null;
+    return err;
 }
 
 // ==================== LOGIN & SESSION ====================
@@ -3257,6 +3285,8 @@ async function loadSession() {
         }
 
         await saveSession();
+        chatGptLoginRequired = false;
+        chatGptLastStatus = await getLoginStatus();
         console.log('[OK] Session valid, siap ngobrol.');
     } catch (err) {
         console.error('[-] Gagal load halaman:', err.message);
@@ -3265,7 +3295,9 @@ async function loadSession() {
 
         if (RUN_HEADLESS) {
             console.error('[!] Session tidak valid/expired. Jalankan npm run login sekali untuk membuat session baru.');
-            process.exit(1);
+            chatGptLoginRequired = true;
+            chatGptLastStatus = { browserReady: false, loggedIn: false, hasPrompt: false, needsLogin: true, accountHint: null, url: null };
+            return;
         }
 
         await loginAndSaveSession();
