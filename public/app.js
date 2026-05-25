@@ -2741,7 +2741,7 @@ function renderAvatar(element, initials, avatarUrl, plan = 'Free') {
     return;
   }
 
-  element.textContent = cleanInitials;
+  element.setAttribute('aria-label', cleanInitials);
   if (plan === 'Pro' || plan === 'Ultra') {
     const badge = document.createElement('span');
     badge.className = `avatar-plan-badge ${plan === 'Ultra' ? 'ultra' : 'pro'}`;

@@ -1688,7 +1688,7 @@ i[data-lucide] {
   height: 34px;
   display: inline-block;
   flex: 0 0 auto;
-  background-image: url("/depoizon-logo.png"), url("/depoizon-logo.svg");
+  background-image: url("/depoizon-logo.png?v=snake-logo-20260525");
   background-position: center;
   background-size: contain;
   background-repeat: no-repeat;
@@ -2315,7 +2315,11 @@ i[data-lucide] {
 }
 .avatar-button.default-logo-avatar {
   color: #111827;
-  background: #e5e7eb;
+  background-color: #e5e7eb;
+  background-image: url("/depoizon-logo.png?v=snake-logo-20260525");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 76%;
 }
 .avatar-button.has-photo {
   color: transparent;
