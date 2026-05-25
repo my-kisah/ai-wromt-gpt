@@ -2196,7 +2196,7 @@ function cleanAssistantTextOutsideCode(content = '', cleaner = cleanDisplayText)
 function textForClipboard(message) {
   const content = String(message?.content || '');
   if (message?.role !== 'assistant') return content;
-  return cleanAssistantTextOutsideCode(content, (text) => cleanDisplayText(text)
+  return cleanAssistantTextOutsideCode(normalizeInlineResponseLayout(content), (text) => cleanDisplayText(text)
     .replace(/[ \t]{2,}/g, ' '));
 }
 
@@ -2208,8 +2208,31 @@ function appendMarkdownParagraph(container, lines) {
   container.appendChild(paragraph);
 }
 
+function normalizeInlineResponseLayout(content = '') {
+  let text = String(content || '');
+  text = text.replace(/\s+(\d+[.)]\s+)/g, '\n$1');
+
+  const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const weekdayPattern = new RegExp(`\\b(${weekdays.join('|')})\\s*=`, 'g');
+  const matches = [...text.matchAll(weekdayPattern)];
+  if (matches.length >= 3) {
+    let output = '';
+    let cursor = 0;
+    matches.forEach((match, index) => {
+      output += text.slice(cursor, match.index);
+      const prefix = `${index + 1}. `;
+      output += `${output.endsWith('\n') ? '' : '\n'}${prefix}${match[0]}`;
+      cursor = match.index + match[0].length;
+    });
+    output += text.slice(cursor);
+    text = output.replace(/\n{3,}/g, '\n\n');
+  }
+
+  return text.trim();
+}
+
 function renderMarkdownText(container, content = '') {
-  const lines = String(content || '').replace(/\r/g, '').split('\n');
+  const lines = normalizeInlineResponseLayout(content).replace(/\r/g, '').split('\n');
   let paragraphLines = [];
   let list = null;
   let currentNumberedItem = null;

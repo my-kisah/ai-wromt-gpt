@@ -2345,6 +2345,55 @@ function chatGptConversationId(rawUrl) {
     return linkedChatGptUrl(rawUrl)?.match(/\/c\/([^/?#]+)/)?.[1] || null;
 }
 
+const READ_CHATGPT_TEXT_HELPER = `
+const clean = (value) => String(value || '').replace(/\\s+\\n/g, '\\n').replace(/\\n\\s+/g, '\\n').replace(/[ \\t]{2,}/g, ' ').trim();
+const readStructuredText = (root) => {
+    if (!root) return '';
+    const lines = [];
+    const push = (value) => {
+        const text = clean(value);
+        if (text) lines.push(text);
+    };
+    const readList = (list) => {
+        const ordered = list.tagName === 'OL';
+        Array.from(list.children).forEach((item, index) => {
+            if (item.tagName !== 'LI') return;
+            const clone = item.cloneNode(true);
+            clone.querySelectorAll('ol, ul').forEach((nested) => nested.remove());
+            const text = clean(clone.innerText || clone.textContent || '');
+            if (text) lines.push(ordered ? \`\${index + 1}. \${text}\` : \`- \${text}\`);
+            item.querySelectorAll(':scope > ol, :scope > ul').forEach(readList);
+        });
+    };
+    const elements = Array.from(root.querySelectorAll(':scope > *'));
+    if (!elements.length) return clean(root.innerText || root.textContent || '');
+    elements.forEach((element) => {
+        if (element.matches('ol, ul')) {
+            readList(element);
+            return;
+        }
+        if (element.matches('pre, code')) {
+            push(element.innerText || element.textContent || '');
+            return;
+        }
+        if (element.matches('p, h1, h2, h3, h4, h5, h6, blockquote')) {
+            push(element.innerText || element.textContent || '');
+            return;
+        }
+        const nestedList = element.querySelector(':scope > ol, :scope > ul');
+        if (nestedList) {
+            const clone = element.cloneNode(true);
+            clone.querySelectorAll('ol, ul').forEach((list) => list.remove());
+            push(clone.innerText || clone.textContent || '');
+            element.querySelectorAll(':scope > ol, :scope > ul').forEach(readList);
+            return;
+        }
+        push(element.innerText || element.textContent || '');
+    });
+    return clean(lines.join('\\n'));
+};
+`;
+
 function decodePngPixels(buffer) {
     const signature = buffer.subarray(0, 8).toString('hex');
     if (signature !== '89504e470d0a1a0a') return null;
@@ -2517,7 +2566,8 @@ function isNewChatCommand(message) {
 }
 
 async function readLastAssistantMessage() {
-    return page.evaluate(() => {
+    return page.evaluate((textHelper) => {
+        const structuredText = new Function('root', `${textHelper}\nreturn readStructuredText(root);`);
         const messageBlocks = document.querySelectorAll('[data-message-author-role="assistant"]');
         if (messageBlocks.length === 0) return '';
 
@@ -2525,16 +2575,17 @@ async function readLastAssistantMessage() {
         const markdownBlocks = Array.from(lastBlock.querySelectorAll('.markdown'));
 
         for (let i = markdownBlocks.length - 1; i >= 0; i -= 1) {
-            const text = markdownBlocks[i].innerText.trim();
+            const text = structuredText(markdownBlocks[i]);
             if (text) return text;
         }
 
-        return lastBlock.innerText.trim();
-    });
+        return structuredText(lastBlock);
+    }, READ_CHATGPT_TEXT_HELPER);
 }
 
 async function getChatSnapshot() {
-    return page.evaluate(() => {
+    return page.evaluate((textHelper) => {
+        const structuredText = new Function('root', `${textHelper}\nreturn readStructuredText(root);`);
         const userBlocks = Array.from(document.querySelectorAll('[data-message-author-role="user"]'));
         const assistantBlocks = Array.from(document.querySelectorAll('[data-message-author-role="assistant"]'));
 
@@ -2543,11 +2594,11 @@ async function getChatSnapshot() {
             const markdownBlocks = Array.from(block.querySelectorAll('.markdown'));
 
             for (let i = markdownBlocks.length - 1; i >= 0; i -= 1) {
-                const text = markdownBlocks[i].innerText.trim();
+                const text = structuredText(markdownBlocks[i]);
                 if (text) return text;
             }
 
-            return block.innerText.trim();
+            return structuredText(block);
         };
 
         return {
@@ -2555,7 +2606,7 @@ async function getChatSnapshot() {
             assistantCount: assistantBlocks.length,
             lastAssistantText: readBlockText(assistantBlocks[assistantBlocks.length - 1])
         };
-    });
+    }, READ_CHATGPT_TEXT_HELPER);
 }
 
 function isTransientResponse(text) {
@@ -2593,7 +2644,8 @@ async function waitUntilNotGenerating(timeout = 180000) {
 }
 
 async function getAssistantAfterLatestUser(previousUserCount, includeImages = false) {
-    return page.evaluate(async (count, shouldIncludeImages) => {
+    return page.evaluate(async (count, shouldIncludeImages, textHelper) => {
+        const structuredText = new Function('root', `${textHelper}\nreturn readStructuredText(root);`);
         const readBlockText = (block) => {
             if (!block) return '';
             const clone = block.cloneNode(true);
@@ -2608,11 +2660,11 @@ async function getAssistantAfterLatestUser(previousUserCount, includeImages = fa
             const markdownBlocks = Array.from(clone.querySelectorAll('.markdown'));
 
             for (let i = markdownBlocks.length - 1; i >= 0; i -= 1) {
-                const text = (markdownBlocks[i].innerText || '').trim();
+                const text = structuredText(markdownBlocks[i]);
                 if (text) return text;
             }
 
-            return (clone.innerText || '').trim();
+            return structuredText(clone);
         };
         const imageToDataUrl = async (img, index) => {
             const src = img.currentSrc || img.src || '';
@@ -2723,11 +2775,12 @@ async function getAssistantAfterLatestUser(previousUserCount, includeImages = fa
             imageCount: imageElements.length + visualElementsAfterUser.length,
             images
         };
-    }, previousUserCount, includeImages);
+    }, previousUserCount, includeImages, READ_CHATGPT_TEXT_HELPER);
 }
 
 async function readFallbackAssistantAfterSubmittedUser(previousUserCount) {
-    return page.evaluate((count) => {
+    return page.evaluate((count, textHelper) => {
+        const structuredText = new Function('root', `${textHelper}\nreturn readStructuredText(root);`);
         const readBlockText = (block) => {
             if (!block) return '';
             const clone = block.cloneNode(true);
@@ -2741,10 +2794,10 @@ async function readFallbackAssistantAfterSubmittedUser(previousUserCount) {
             ].forEach((selector) => clone.querySelectorAll(selector).forEach((node) => node.remove()));
             const markdownBlocks = Array.from(clone.querySelectorAll('.markdown, [data-message-content-part], [data-testid="conversation-turn-"]'));
             for (let index = markdownBlocks.length - 1; index >= 0; index -= 1) {
-                const text = (markdownBlocks[index].innerText || markdownBlocks[index].textContent || '').trim();
+                const text = structuredText(markdownBlocks[index]);
                 if (text) return text;
             }
-            return (clone.innerText || clone.textContent || '').trim();
+            return structuredText(clone);
         };
 
         const blocks = Array.from(document.querySelectorAll('[data-message-author-role]'));
@@ -2768,7 +2821,7 @@ async function readFallbackAssistantAfterSubmittedUser(previousUserCount) {
             if (text) return text;
         }
         return '';
-    }, previousUserCount).catch(() => '');
+    }, previousUserCount, READ_CHATGPT_TEXT_HELPER).catch(() => '');
 }
 
 async function readLooseAssistantAfterSubmittedUser(previousUserCount) {
