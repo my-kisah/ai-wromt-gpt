@@ -4398,6 +4398,7 @@ body.theme-dark .ultra-button {
   .admin-table-card table {
     display: block;
     width: 100%;
+    min-width: 0;
   }
   .admin-table-card thead {
     display: none;
@@ -4448,6 +4449,77 @@ body.theme-dark .ultra-button {
   .admin-row-actions button {
     flex: 1 1 auto;
     min-width: 74px;
+  }
+  .admin-users-card {
+    overflow: visible;
+  }
+  .admin-users-card table {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+    table-layout: auto;
+  }
+  .admin-users-card tbody {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+  }
+  .admin-users-card tr {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--input-bg);
+    box-shadow: 0 8px 20px rgba(17, 24, 39, .04);
+  }
+  .admin-users-card td,
+  .admin-users-card td:nth-child(n) {
+    width: 100% !important;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .admin-users-card td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+  .admin-users-card td,
+  .admin-users-card td strong,
+  .admin-users-card td span,
+  .admin-users-card td small {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .admin-users-card .admin-plan-cell {
+    justify-items: start;
+  }
+  .admin-users-card .admin-plan-select {
+    min-width: 116px;
+    max-width: 100%;
+  }
+  .admin-users-card .status-pill {
+    width: fit-content;
+  }
+  .admin-users-card .admin-row-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+  }
+  .admin-users-card .admin-row-actions button {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
   }
   .admin-analytics-summary,
   .analytics-plan-grid,
