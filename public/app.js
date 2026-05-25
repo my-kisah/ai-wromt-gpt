@@ -2156,8 +2156,21 @@ function renderInlineMarkdown(text = '') {
   return html;
 }
 
-function cleanDisplayText(text = '') {
+function stripMarkdownDecorations(text = '') {
   return String(text || '')
+    .replace(/^\s*#{1,6}\s+/gm, '')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/__([^_\n]+)__/g, '$1')
+    .replace(/(^|[^\w])\*([^*\n]+)\*/g, '$1$2')
+    .replace(/(^|[^\w])_([^_\n]+)_/g, '$1$2')
+    .replace(/`([^`\n]+)`/g, '$1')
+    .replace(/^\s*[*+-]\s+/gm, '')
+    .replace(/^\s*(?:[-*_]\s*){3,}\s*$/gm, '')
+    .replace(/[*_`]{1,3}/g, '');
+}
+
+function cleanDisplayText(text = '') {
+  return stripMarkdownDecorations(text)
     .replace(/\bjawaban saya akan menggunakan[^.?!]*(?:[.?!]|$)/gi, '')
     .replace(/\btidak ada simbol markdown[^.?!]*(?:[.?!]|$)/gi, '')
     .replace(/\bjangan spam simbol markdown[^.?!]*(?:[.?!]|$)/gi, '')
@@ -2184,11 +2197,6 @@ function textForClipboard(message) {
   const content = String(message?.content || '');
   if (message?.role !== 'assistant') return content;
   return cleanAssistantTextOutsideCode(content, (text) => cleanDisplayText(text)
-    .replace(/^\s*#{1,6}\s+/gm, '')
-    .replace(/(^|[^\w])\*\*([^*]+)\*\*/g, '$1$2')
-    .replace(/(^|[^\w])__([^_]+)__/g, '$1$2')
-    .replace(/(^|[^\w])\*([^*\n]+)\*/g, '$1$2')
-    .replace(/^\s*(?:[-*_]\s*){3,}\s*$/gm, '')
     .replace(/[ \t]{2,}/g, ' '));
 }
 

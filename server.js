@@ -1956,6 +1956,14 @@ function parseDigitalOceanReply(payload) {
 
 function cleanAssistantContentForStore(content = '') {
     return String(content || '')
+        .replace(/^\s*#{1,6}\s+/gm, '')
+        .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+        .replace(/__([^_\n]+)__/g, '$1')
+        .replace(/(^|[^\w])\*([^*\n]+)\*/g, '$1$2')
+        .replace(/(^|[^\w])_([^_\n]+)_/g, '$1$2')
+        .replace(/`([^`\n]+)`/g, '$1')
+        .replace(/^\s*[*+-]\s+/gm, '')
+        .replace(/[*_`]{1,3}/g, '')
         .replace(/(?:^|\n)\s*(?:[-*_]\s*){3,}\s*(?=\n|$)/g, '\n')
         .replace(/\bjawaban saya akan menggunakan[^.?!]*(?:[.?!]|$)/gi, '')
         .replace(/\btidak ada simbol markdown[^.?!]*(?:[.?!]|$)/gi, '')
