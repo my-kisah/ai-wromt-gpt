@@ -1467,6 +1467,22 @@ function cleanupTempFiles(files) {
     });
 }
 
+function cleanPromptText(value) {
+    let text = String(value || '');
+    if (/ProseMirror-trailingBreak|<\/?p\b|<br\b/i.test(text)) {
+        text = text
+            .replace(/<br\s+class=["']?ProseMirror-trailingBreak["']?\s*\/?>/gi, '')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
+            .replace(/<\/?p[^>]*>/gi, '')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/&amp;/gi, '&');
+    }
+    return text.replace(/\u00a0/g, ' ').trim();
+}
+
 function buildPrompt(message, attachments, replyTo) {
     const parts = [];
 
@@ -1486,7 +1502,7 @@ function buildPrompt(message, attachments, replyTo) {
         });
     }
 
-    parts.push(message);
+    parts.push(cleanPromptText(message));
     return parts.filter(Boolean).join('\n\n');
 }
 
@@ -3069,12 +3085,16 @@ async function focusPrompt() {
 }
 
 async function clearPrompt() {
+    await focusPrompt();
+    await page.keyboard.down(process.platform === 'darwin' ? 'Meta' : 'Control');
+    await page.keyboard.press('A');
+    await page.keyboard.up(process.platform === 'darwin' ? 'Meta' : 'Control');
+    await page.keyboard.press('Backspace');
     await page.evaluate((selector) => {
         const prompt = document.querySelector(selector);
         if (!prompt) return;
 
         prompt.textContent = '';
-        prompt.innerHTML = '<p><br class="ProseMirror-trailingBreak"></p>';
         prompt.dispatchEvent(new InputEvent('input', {
             bubbles: true,
             inputType: 'deleteContentBackward'
@@ -4280,7 +4300,7 @@ app.post('/api/chat', async (req, res) => {
     const store = readStore();
     const requestUser = currentUserFromRequest(req, store);
     if (!requestUser) return res.status(401).json({ error: 'Login diperlukan untuk memakai Snake AI.' });
-    const content = String(req.body?.message || '').trim();
+    const content = cleanPromptText(req.body?.message);
     const mode = req.body?.mode && typeof req.body.mode === 'object'
         ? {
             plan: ['Free', 'Pro', 'Ultra'].includes(req.body.mode.plan) ? req.body.mode.plan : 'Free',
