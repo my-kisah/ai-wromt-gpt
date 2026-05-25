@@ -37,10 +37,23 @@ body.theme-dark {
 }
 
 * { box-sizing: border-box; }
-html, body { width: 100%; min-height: 100%; overflow-x: hidden; }
+html, body {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
+}
 body {
   margin: 0;
   min-height: 100vh;
+  max-width: 100%;
   background: var(--bg);
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -1606,10 +1619,13 @@ i[data-lucide] {
 
 .app-shell {
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   display: grid;
   grid-template-columns: var(--sidebar) minmax(0, 1fr);
   background: var(--bg);
   padding-left: var(--rail);
+  overflow-x: hidden;
   transition: grid-template-columns .2s ease;
 }
 .app-shell.sidebar-collapsed {
@@ -2357,6 +2373,8 @@ i[data-lucide] {
 
 .main-panel {
   grid-column: 2;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   height: 100vh;
   min-height: 100vh;
@@ -2475,6 +2493,7 @@ i[data-lucide] {
 .chat-view {
   min-height: 0;
   overflow: auto;
+  overflow-x: hidden;
   padding: 24px min(8vw, 128px) 190px;
 }
 .hidden { display: none !important; }
@@ -4074,10 +4093,42 @@ body.theme-dark .ultra-button {
     --rail: 0px;
     --admin-sidebar: min(282px, 76vw);
   }
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
+  }
+  @supports (width: 100dvw) {
+    html,
+    body {
+      width: 100dvw;
+      max-width: 100dvw;
+    }
+  }
+  body,
+  .app-shell,
+  .main-panel,
+  .topbar,
+  .welcome-view,
+  .chat-view,
+  .message-list,
+  .composer-wrap,
+  .composer,
+  .admin-dashboard,
+  .admin-main,
+  .admin-view-panel {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
   .auth-screen {
     align-items: center;
     padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom));
     overflow: auto;
+    overflow-x: hidden;
   }
   .auth-card {
     width: min(100%, 330px);
@@ -4433,6 +4484,8 @@ body.theme-dark .ultra-button {
     grid-template-columns: minmax(0, 1fr);
     padding-left: 0;
     min-height: 100svh;
+    width: 100%;
+    contain: inline-size;
   }
   .app-shell.sidebar-collapsed {
     grid-template-columns: minmax(0, 1fr);
@@ -4441,7 +4494,8 @@ body.theme-dark .ultra-button {
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;
-    width: min(292px, 78vw);
+    width: min(292px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
     transform: translateX(-105%);
     z-index: 50;
     box-shadow: var(--shadow);
@@ -4450,14 +4504,16 @@ body.theme-dark .ultra-button {
   }
   .sidebar.open { transform: translateX(0); }
   .sidebar.collapsed {
-    width: min(292px, 78vw);
+    width: min(292px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
     padding: max(16px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
     border-right: 1px solid var(--border);
     transform: translateX(-105%);
   }
   .app-shell:not(.sidebar-collapsed) .sidebar,
   .app-shell.sidebar-collapsed .sidebar {
-    width: min(292px, 78vw);
+    width: min(292px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
     padding: max(16px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
     border-right: 1px solid var(--border);
   }
@@ -4540,6 +4596,8 @@ body.theme-dark .ultra-button {
   .mobile-only { display: inline-flex; }
   .main-panel {
     grid-column: 1;
+    width: 100%;
+    max-width: 100%;
     height: 100svh;
     min-height: 100svh;
     overflow: hidden;
@@ -4550,6 +4608,7 @@ body.theme-dark .ultra-button {
     gap: 10px;
     position: relative;
     z-index: 45;
+    width: 100%;
   }
   .topbar-item { display: none; }
   .topbar-auth-actions {
@@ -4590,6 +4649,7 @@ body.theme-dark .ultra-button {
   }
   .chat-view {
     padding: 8px clamp(12px, 4vw, 18px) 146px;
+    width: 100%;
   }
   .message-list { gap: 24px; }
   .bubble {
@@ -4658,6 +4718,9 @@ body.theme-dark .ultra-button {
   }
   .composer-wrap {
     left: 0;
+    right: 0;
+    width: auto;
+    max-width: 100%;
     padding: 10px clamp(10px, 3.6vw, 16px) max(14px, env(safe-area-inset-bottom));
   }
   .app-shell.sidebar-collapsed .composer-wrap { left: 0; }
