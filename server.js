@@ -673,8 +673,7 @@ function createConversationForUser(store, user, title = 'Percakapan Baru') {
 }
 
 function ensureDefaultConversationForUser(store, user) {
-    if (!user || userConversations(store, user).length > 0) return null;
-    return createConversationForUser(store, user);
+    return null;
 }
 
 function createDefaultAdmin() {
@@ -2525,6 +2524,11 @@ async function waitForLinkedChatGptUrl(timeout = 15000) {
     return linkedChatGptUrl(page.url());
 }
 
+function conversationNeedsFirstRemoteChat(conversation) {
+    return !conversation?.chatgptUrl
+        && (conversation?.chatgptPendingNew || !(conversation?.chatgptConversationId));
+}
+
 async function openLinkedChat(conversation) {
     await recoverSession();
 
@@ -2537,7 +2541,11 @@ async function openLinkedChat(conversation) {
         return;
     }
 
-    if (conversation.chatgptPendingNew || (conversation.messages || []).length === 0) {
+    if ((conversation.messages || []).length === 0) {
+        return;
+    }
+
+    if (conversationNeedsFirstRemoteChat(conversation)) {
         await openNewChat();
         return;
     }
@@ -4243,6 +4251,10 @@ app.post('/api/conversations/:id/select', async (req, res) => {
         return res.json({ conversation, localOnly: true });
     }
 
+    if (conversationNeedsFirstRemoteChat(conversation)) {
+        return res.json({ conversation, localOnly: true });
+    }
+
     try {
         await withRemoteChatLock(() => openLinkedChat(conversation));
     } catch (err) {
@@ -4537,11 +4549,13 @@ app.post('/api/chat', async (req, res) => {
         freshAssistantMessage.completedAt = nowIso();
         freshConversation.updatedAt = nowIso();
         if (!digitalOceanConfig) {
-            const currentChatGptUrl = await waitForLinkedChatGptUrl();
+            const currentChatGptUrl = await waitForLinkedChatGptUrl(60000);
             if (currentChatGptUrl) {
                 freshConversation.chatgptUrl = currentChatGptUrl;
                 freshConversation.chatgptConversationId = chatGptConversationId(currentChatGptUrl);
                 freshConversation.chatgptPendingNew = false;
+            } else if (!freshConversation.chatgptUrl) {
+                freshConversation.chatgptPendingNew = true;
             }
         }
         const freshUser = (freshStore.auth?.users || []).find((user) => user.id === requestUser.id);
